@@ -1033,6 +1033,7 @@ function renderModal(){
   else if(state.modal.kind==='pickType') buildPickTypeSheet(sheet);
   else if(state.modal.kind==='addEdit') buildAddEditSheet(sheet);
   else if(state.modal.kind==='appPassword') buildAppPasswordSheet(sheet, state.modal.mode);
+  else if(state.modal.kind==='importFlow') buildImportFlowSheet(sheet);
 
   return overlay;
 }
@@ -1138,6 +1139,133 @@ function openAddForm(type, existingItem){
 }
 
 /* ============================= APP PASSWORD (SETTINGS) ============================= */
+/* ============================= النسخ الاحتياطي (تصدير/استيراد) ============================= */
+// التصدير: يُنزّل ملف JSON على جهاز المستخدم. إذا كانت كلمة مرور التطبيق مفعّلة، يُشفَّر الملف
+// بنفس معيار AES-256 (بملح جديد مستقل) بحيث يبقى محميًا حتى لو خُزِّن في مكان أقل أمانًا (بريد، سحابة).
+function exportBackup(){
+  (async ()=>{
+    try{
+      const payload = { app:'khazna-vault', version:1, exportedAt: new Date().toISOString() };
+      if(state.masterSet && state.masterPassword){
+        if(!hasWebCrypto()){ showToast('التصدير المشفّر يحتاج HTTPS','⚠️'); return; }
+        const {key, saltB64} = await deriveKey(state.masterPassword, null); // ملح مستقل خاص بملف النسخة
+        const enc = await encryptJson(key, state.items);
+        payload.encrypted = true;
+        payload.salt = saltB64;
+        payload.iv = enc.iv;
+        payload.data = enc.data;
+      } else {
+        payload.encrypted = false;
+        payload.items = state.items;
+      }
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const dateStr = new Date().toISOString().slice(0,10);
+      a.href = url; a.download = `khazna-backup-${dateStr}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 2000);
+      showToast(payload.encrypted ? '📤 تم تصدير نسخة احتياطية مشفّرة' : '📤 تم تصدير نسخة احتياطية', '✅');
+    }catch(e){
+      showToast('تعذّر التصدير، حاول مجددًا','⚠️');
+    }
+  })();
+}
+function triggerImport(){
+  const input = document.createElement('input');
+  input.type='file'; input.accept='application/json,.json';
+  input.onchange = async ()=>{
+    const file = input.files[0];
+    if(!file) return;
+    try{
+      const text = await file.text();
+      const payload = JSON.parse(text);
+      if(!payload || (payload.encrypted===undefined)){ showToast('هذا الملف مو نسخة احتياطية صالحة من خزنة','⚠️'); return; }
+      state.modal = {kind:'importFlow', payload, items:null};
+      render();
+    }catch(e){
+      showToast('الملف غير صالح أو تالف','⚠️');
+    }
+  };
+  input.click();
+}
+function buildImportFlowSheet(sheet){
+  const modal = state.modal;
+  sheet.innerHTML = `<div class="sheet-handle"></div>`;
+  const head = el('div','sheet-head');
+  head.innerHTML = `<div class="brand-badge" style="padding:0;"><span class="em">📥</span><span class="t">استيراد نسخة احتياطية</span></div><button class="tiny-btn" id="closeBtn">✕</button>`;
+  sheet.appendChild(head);
+  head.querySelector('#closeBtn').onclick = ()=>{ state.modal=null; render(); };
+
+  const body = el('div'); body.style.padding='6px 16px 4px';
+
+  // الخطوة 1: كلمة المرور، فقط إذا كان الملف مشفّرًا ولم يُفَك بعد
+  if(modal.payload.encrypted && !modal.items){
+    body.appendChild(el('p','sub','هذا الملف مشفّر. أدخل كلمة مرور التطبيق التي كانت مفعّلة وقت التصدير:'));
+    const field = el('div','field');
+    const wrap = el('div','pwd-wrap');
+    const input = el('input'); input.type='password'; input.autocomplete='off';
+    const eye = el('button','eye','👁️'); eye.type='button';
+    eye.onclick = ()=>{ input.type = input.type==='password'?'text':'password'; eye.textContent = input.type==='password'?'👁️':'🙈'; };
+    wrap.appendChild(input); wrap.appendChild(eye);
+    field.appendChild(wrap);
+    body.appendChild(field);
+    sheet.appendChild(body);
+
+    const btn = el('button','btn btn-primary','فك التشفير ومتابعة');
+    btn.style.margin='0 16px 16px'; btn.style.width='calc(100% - 32px)';
+    btn.onclick = async ()=>{
+      if(!input.value){ showToast('اكتب كلمة المرور','⚠️'); return; }
+      if(!hasWebCrypto()){ showToast('يحتاج HTTPS لفك التشفير','⚠️'); return; }
+      btn.disabled=true; btn.textContent='جارٍ فك التشفير…';
+      try{
+        const {key} = await deriveKey(input.value, modal.payload.salt);
+        const items = await decryptJson(key, {iv: modal.payload.iv, data: modal.payload.data});
+        state.modal.items = items;
+        render();
+      }catch(e){
+        showToast('كلمة المرور غير صحيحة','⚠️');
+        btn.disabled=false; btn.textContent='فك التشفير ومتابعة';
+      }
+    };
+    sheet.appendChild(btn);
+    return;
+  }
+
+  // الخطوة 2: اختيار طريقة الدمج بعد توفر البيانات (مشفّرة كانت أو لا)
+  const items = modal.items || modal.payload.items;
+  if(!items){
+    body.appendChild(el('p','sub','⚠️ الملف لا يحتوي بيانات صالحة.'));
+    sheet.appendChild(body);
+    return;
+  }
+  const totalCount = Object.values(items).reduce((s,l)=>s+((l&&l.length)||0),0);
+  body.appendChild(el('p','sub', `تم العثور على ${totalCount} عنصر في الملف. اختر طريقة الاستيراد:`));
+  sheet.appendChild(body);
+
+  const mergeBtn = el('button','btn btn-primary','🔗 دمج مع بياناتي الحالية');
+  mergeBtn.style.margin='0 16px 10px'; mergeBtn.style.width='calc(100% - 32px)';
+  mergeBtn.onclick = ()=>{
+    Object.keys(items).forEach(type=>{
+      (items[type]||[]).forEach(it=>{
+        const clone = Object.assign({}, it, {id:`it_${uid++}`});
+        state.items[type] = state.items[type] || [];
+        state.items[type].push(clone);
+      });
+    });
+    state.modal=null; render(); showToast(`تم دمج ${totalCount} عنصر بنجاح`,'✅');
+  };
+  sheet.appendChild(mergeBtn);
+
+  const replaceBtn = el('button','btn btn-danger','⚠️ استبدال كل بياناتي الحالية');
+  replaceBtn.style.margin='0 16px 16px'; replaceBtn.style.width='calc(100% - 32px)';
+  replaceBtn.onclick = ()=>{
+    state.items = items;
+    state.modal=null; render(); showToast('تم استبدال البيانات بالكامل','✅');
+  };
+  sheet.appendChild(replaceBtn);
+}
+
 function buildAppPasswordSheet(sheet, mode){
   const titles = {
     create: {t:'إنشاء كلمة مرور للتطبيق', s:'ستُطلب منك هذه الكلمة في كل مرة تفتح فيها التطبيق، وسيتم تشفير بياناتك محليًا بها (AES-256)'},
@@ -1653,9 +1781,8 @@ function renderSettings(){
   ]));
 
   frag.appendChild(group('البيانات', [
-    row('☁️','النسخ الاحتياطي المشفر', `<span class="chev">‹</span>`, ()=>showToast('نسخة احتياطية مشفرة — قريبًا','🛠️')),
-    row('📥','استيراد البيانات', `<span class="chev">‹</span>`, ()=>showToast('قريبًا','🛠️')),
-    row('📤','تصدير البيانات', `<span class="chev">‹</span>`, ()=>showToast('قريبًا','🛠️')),
+    row('📤','تصدير نسخة احتياطية', `<span class="chev">‹</span>`, ()=>exportBackup()),
+    row('📥','استيراد نسخة احتياطية', `<span class="chev">‹</span>`, ()=>triggerImport()),
   ]));
 
   frag.appendChild(group('حول', [
