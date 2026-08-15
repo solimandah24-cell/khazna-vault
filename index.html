@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>خزنة — الخزنة الرقمية الذكية</title>
+<meta name="theme-color" content="#1C9C82">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="خزنة">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F6FA; --surface:#FFFFFF; --surface-2:#EEF0F7; --border:#E1E4EF;
+  --text:#1B2340; --text-dim:#5B6180; --text-faint:#9198B5;
+  --accent:#1C9C82; --accent-strong:#127A65; --accent-soft:#E3F5F0;
+  --navy:#1B2340; --navy-soft:#2A3358;
+  --danger:#E1495B; --danger-soft:#FBE7E9;
+  --warn:#C98A1D; --warn-soft:#FBF0DC;
+  --safe:#1C9C82; --safe-soft:#E3F5F0;
+  --shadow: 0 1px 2px rgba(27,35,64,.04), 0 8px 24px -12px rgba(27,35,64,.18);
+  --radius: 18px;
+  --font: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+[data-theme="dark"]{
+  --bg:#12162A; --surface:#191E38; --surface-2:#212748; --border:#2B3157;
+  --text:#EEF0FA; --text-dim:#AEB3D6; --text-faint:#767CA3;
+  --accent:#2FD7B0; --accent-strong:#4FE3C4; --accent-soft:#173A34;
+  --navy:#0D1024; --navy-soft:#1B2144;
+  --danger:#FF7A8A; --danger-soft:#3A1D26;
+  --warn:#F0C05A; --warn-soft:#372B12;
+  --safe:#2FD7B0; --safe-soft:#123B33;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 30px -14px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%; margin:0;}
+body{
+  font-family:var(--font); background:var(--bg); color:var(--text);
+  transition:background .25s ease,color .25s ease;
+  min-height:100vh; overflow-x:hidden;
+}
+#root{max-width:480px; margin:0 auto; min-height:100vh; background:var(--bg); position:relative; padding-bottom:86px;}
+button{font-family:var(--font); cursor:pointer;}
+input,select,textarea{font-family:var(--font);}
+::selection{background:var(--accent-soft); color:var(--accent-strong);}
+
+/* ---------- shared bits ---------- */
+.screen{padding:20px 18px 12px; animation:fadeUp .35s ease;}
+@keyframes fadeUp{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)}}
+.h1{font-size:22px; font-weight:700; margin:0 0 4px;}
+.h2{font-size:18px; font-weight:700; margin:0 0 2px;}
+.sub{color:var(--text-dim); font-size:13.5px; line-height:1.6; margin:0;}
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);}
+.btn{border:none; border-radius:14px; padding:14px 18px; font-size:15px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; transition:transform .12s ease, opacity .12s ease, background .2s ease; width:100%;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--accent); color:#06231C;}
+[data-theme="dark"] .btn-primary{color:#04140F;}
+.btn-primary:disabled{opacity:.45; pointer-events:none;}
+.btn-ghost{background:var(--surface-2); color:var(--text);}
+.btn-outline{background:transparent; color:var(--accent); border:1.5px solid var(--accent);}
+.btn-danger{background:var(--danger-soft); color:var(--danger);}
+.btn-sm{padding:9px 12px; font-size:13px; width:auto; border-radius:10px;}
+.link-btn{background:none; border:none; color:var(--accent); font-size:12.5px; font-weight:600; padding:8px 2px 0; cursor:pointer; text-align:right; width:100%;}
+.field-hint{font-size:11.5px; color:var(--text-faint); margin-top:6px; line-height:1.5;}
+.field input.ok{border-color:var(--safe) !important;}
+.field input.bad{border-color:var(--danger) !important;}
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:12.5px; font-weight:600; color:var(--text-dim); margin-bottom:6px;}
+.field input, .field select, .field textarea{
+  width:100%; background:var(--surface-2); border:1.5px solid transparent; border-radius:12px;
+  padding:12px 14px; font-size:14.5px; color:var(--text); outline:none; transition:border-color .15s ease;
+}
+.field textarea{resize:vertical; min-height:70px; font-family:var(--font);}
+.field input:focus, .field select:focus, .field textarea:focus{border-color:var(--accent);}
+.field .pwd-wrap{position:relative;}
+.field .pwd-wrap input{padding-left:40px;}
+.field .pwd-wrap .eye{position:absolute; left:10px; top:50%; transform:translateY(-50%); background:none; border:none; font-size:16px; color:var(--text-dim); padding:6px;}
+.row{display:flex; gap:10px;}
+.row > *{flex:1;}
+.chip-row{display:flex; gap:8px; flex-wrap:wrap;}
+.chip{padding:7px 13px; border-radius:20px; background:var(--surface-2); font-size:12.5px; font-weight:600; color:var(--text-dim); border:1.5px solid transparent; cursor:pointer; user-select:none;}
+.chip.active{background:var(--accent-soft); color:var(--accent-strong); border-color:var(--accent);}
+.toggle-row{display:flex; align-items:center; justify-content:space-between; padding:12px 2px;}
+.toggle-row .lbl{font-size:14px; font-weight:500;}
+.switch{width:44px; height:26px; border-radius:20px; background:var(--surface-2); position:relative; border:none; flex-shrink:0;}
+.switch::after{content:''; position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:transform .18s ease;}
+.switch.on{background:var(--accent);}
+.switch.on::after{transform:translateX(-18px);}
+.masked{font-family:var(--mono); letter-spacing:1px; direction:ltr; display:inline-block;}
+.toast{
+  position:fixed; bottom:96px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0;
+  background:var(--navy); color:#fff; padding:11px 18px; border-radius:30px; font-size:13px; font-weight:600;
+  z-index:999; pointer-events:none; transition:all .25s ease; box-shadow:var(--shadow); white-space:nowrap; max-width:88%;
+  display:flex; align-items:center; gap:8px;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+.topbar{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+.back-btn{width:36px; height:36px; border-radius:11px; background:var(--surface-2); border:none; display:flex; align-items:center; justify-content:center; font-size:16px; color:var(--text); flex-shrink:0;}
+.icon-btn{width:38px; height:38px; border-radius:12px; background:var(--surface-2); border:none; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;}
+
+/* ---------- bottom nav ---------- */
+.bottom-nav{
+  position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto;
+  background:var(--surface); border-top:1px solid var(--border);
+  display:flex; padding:8px 6px calc(8px + env(safe-area-inset-bottom)); z-index:60;
+}
+.nav-item{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; background:none; border:none; padding:6px 2px; color:var(--text-faint); font-size:10.5px; font-weight:600; border-radius:12px;}
+.nav-item .ic{font-size:19px; line-height:1;}
+.nav-item.active{color:var(--accent);}
+.nav-item.fab{margin-top:-22px;}
+.nav-item.fab .ic{width:46px; height:46px; border-radius:50%; background:var(--accent); color:#06231C; display:flex; align-items:center; justify-content:center; font-size:24px; box-shadow:0 8px 18px -6px rgba(28,156,130,.55);}
+[data-theme="dark"] .nav-item.fab .ic{color:#04140F;}
+
+/* ---------- onboarding / lock ---------- */
+.onb{min-height:100vh; display:flex; flex-direction:column; padding:32px 24px; background:linear-gradient(180deg,var(--navy) 0%, var(--navy-soft) 100%); color:#fff;}
+.onb .spacer{flex:1;}
+.vault-mark{width:76px; height:76px; border-radius:22px; background:rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center; font-size:34px; margin-bottom:22px; border:1px solid rgba(255,255,255,.14);}
+.onb h1{font-size:26px; font-weight:700; margin:0 0 10px; line-height:1.35;}
+.onb p{color:rgba(255,255,255,.65); font-size:14.5px; line-height:1.7; margin:0 0 26px;}
+.onb .dots{display:flex; gap:6px; margin-bottom:18px;}
+.onb .dots span{width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.25);}
+.onb .dots span.on{background:var(--accent); width:20px; border-radius:4px;}
+.onb .feature{display:flex; align-items:center; gap:12px; padding:10px 0; color:rgba(255,255,255,.85); font-size:13.5px;}
+.onb .feature .em{font-size:18px;}
+.onb-input{width:100%; background:rgba(255,255,255,.07); border:1.5px solid rgba(255,255,255,.16); border-radius:14px; padding:14px 16px; font-size:15px; color:#fff; outline:none; margin-bottom:12px;}
+.onb-input::placeholder{color:rgba(255,255,255,.4);}
+.onb-input:focus{border-color:var(--accent);}
+.strength-bar{height:5px; border-radius:4px; background:rgba(255,255,255,.12); overflow:hidden; margin-bottom:6px;}
+.strength-bar i{display:block; height:100%; border-radius:4px; transition:width .25s ease, background .25s ease;}
+.strength-label{font-size:11.5px; color:rgba(255,255,255,.55); margin-bottom:18px;}
+.lock-avatar{width:88px; height:88px; border-radius:50%; background:var(--accent-soft); color:var(--accent-strong); display:flex; align-items:center; justify-content:center; font-size:38px; margin:0 auto 18px;}
+.dot-pins{display:flex; justify-content:center; gap:12px; margin:22px 0;}
+.dot-pins span{width:13px; height:13px; border-radius:50%; border:1.5px solid var(--text-faint); transition:all .15s ease;}
+.dot-pins span.filled{background:var(--accent); border-color:var(--accent);}
+.dot-pins span.err{background:var(--danger); border-color:var(--danger);}
+.keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; max-width:280px; margin:0 auto;}
+.keypad button{aspect-ratio:1; border-radius:50%; background:var(--surface-2); border:none; font-size:20px; font-weight:600; color:var(--text);}
+.keypad button:active{background:var(--accent-soft);}
+.keypad button.ghost{background:none; color:var(--text-dim); font-size:14px;}
+
+/* ---------- dashboard ---------- */
+.search-bar{display:flex; align-items:center; gap:10px; background:var(--surface); border:1.5px solid var(--border); border-radius:16px; padding:12px 14px; margin:14px 0 18px;}
+.search-bar input{border:none; background:none; outline:none; flex:1; font-size:14.5px; color:var(--text);}
+.stats-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-bottom:22px;}
+.stat-card{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 6px; text-align:center;}
+.stat-card .n{font-size:18px; font-weight:700;}
+.stat-card .l{font-size:10.5px; color:var(--text-dim); margin-top:2px;}
+.section-title{display:flex; align-items:center; justify-content:space-between; margin:22px 0 12px;}
+.section-title h3{font-size:15.5px; font-weight:700; margin:0;}
+.section-title .more{font-size:12.5px; color:var(--accent); font-weight:600; background:none; border:none;}
+.cat-grid{display:grid; grid-template-columns:1fr 1fr; gap:11px;}
+.cat-card{background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:8px; text-align:right; border:none;}
+.cat-card .em{font-size:22px;}
+.cat-card .t{font-size:13.5px; font-weight:700;}
+.cat-card .c{font-size:11.5px; color:var(--text-dim);}
+.fav-scroll{display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; margin:0 -18px; padding-inline:18px;}
+.fav-scroll::-webkit-scrollbar{display:none;}
+.fav-chip{flex-shrink:0; width:118px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px; text-align:right;}
+.fav-chip .em{font-size:18px; margin-bottom:6px;}
+.fav-chip .t{font-size:12.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.fav-chip .s{font-size:10.5px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.empty-hint{text-align:center; padding:34px 12px; color:var(--text-faint); font-size:13px;}
+.empty-hint .em{font-size:30px; margin-bottom:8px; display:block;}
+
+/* ---------- item list / cards ---------- */
+.item-row{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:13px 14px; margin-bottom:10px;}
+.item-row .avatar{width:42px; height:42px; border-radius:12px; background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;}
+.item-row .info{flex:1; min-width:0;}
+.item-row .t{font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.item-row .s{font-size:12px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.item-row .star{background:none; border:none; font-size:17px; color:var(--text-faint); flex-shrink:0; padding:6px;}
+.item-row .star.on{color:#E8B93B;}
+
+/* ---------- detail sheet ---------- */
+.overlay{position:fixed; inset:0; background:rgba(10,12,26,.5); z-index:100; display:flex; align-items:flex-end; opacity:0; pointer-events:none; transition:opacity .22s ease;}
+.overlay.show{opacity:1; pointer-events:auto;}
+.sheet{width:100%; max-width:480px; margin:0 auto; background:var(--bg); border-radius:24px 24px 0 0; max-height:92vh; overflow-y:auto; transform:translateY(16px); transition:transform .25s ease; padding-bottom:30px;}
+.overlay.show .sheet{transform:translateY(0);}
+.sheet-handle{width:38px; height:4px; background:var(--border); border-radius:3px; margin:10px auto 4px;}
+.sheet-head{display:flex; align-items:center; justify-content:space-between; padding:10px 18px 4px;}
+.detail-hero{display:flex; flex-direction:column; align-items:center; text-align:center; padding:8px 18px 18px;}
+.detail-hero .avatar{width:60px; height:60px; border-radius:18px; background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:26px; margin-bottom:10px;}
+.detail-hero .t{font-size:17px; font-weight:700;}
+.detail-hero .s{font-size:12.5px; color:var(--text-dim);}
+.detail-field{display:flex; align-items:center; justify-content:space-between; padding:13px 16px; border-bottom:1px solid var(--border);}
+.detail-field:last-child{border-bottom:none;}
+.detail-field .l{font-size:11.5px; color:var(--text-dim); margin-bottom:3px;}
+.detail-field .v{font-size:14px; font-weight:600;}
+.detail-field .acts{display:flex; gap:4px; flex-shrink:0;}
+.tiny-btn{background:var(--surface-2); border:none; border-radius:9px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-size:13.5px; color:var(--text-dim); flex-shrink:0;}
+.detail-actions{display:flex; gap:10px; padding:16px 16px 4px;}
+.sheet-body-card{margin:0 16px; overflow:hidden;}
+.sheet-title{font-size:16.5px; font-weight:700; padding:6px 18px 14px;}
+
+/* ---------- generator ---------- */
+.gen-display{background:var(--navy); color:#fff; border-radius:18px; padding:22px 16px; text-align:center; margin-bottom:20px;}
+.gen-display .pw{font-family:var(--mono); font-size:19px; letter-spacing:1px; direction:ltr; word-break:break-all; margin-bottom:14px;}
+.gen-display .row-actions{display:flex; gap:10px;}
+.gen-display .row-actions button{flex:1; background:rgba(255,255,255,.1); color:#fff; border:none; border-radius:12px; padding:10px; font-size:13px; font-weight:600;}
+.slider-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;}
+.slider-row .val{font-family:var(--mono); font-weight:700; color:var(--accent);}
+input[type=range]{width:100%; accent-color:var(--accent); margin-bottom:18px;}
+
+/* ---------- security center ---------- */
+.score-ring-wrap{display:flex; flex-direction:column; align-items:center; padding:14px 0 22px;}
+.score-ring{position:relative; width:150px; height:150px;}
+.score-ring svg{transform:rotate(-90deg);}
+.score-ring .num{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+.score-ring .num b{font-size:30px; font-weight:700;}
+.score-ring .num span{font-size:11px; color:var(--text-dim);}
+.sec-item{display:flex; align-items:center; gap:12px; padding:13px 14px; border-bottom:1px solid var(--border);}
+.sec-item:last-child{border-bottom:none;}
+.sec-item .ic{width:36px; height:36px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;}
+.sec-item .txt .t{font-size:13.5px; font-weight:600;}
+.sec-item .txt .s{font-size:11.5px; color:var(--text-dim); margin-top:1px;}
+
+/* ---------- settings ---------- */
+.set-group{margin-bottom:20px;}
+.set-group .g-title{font-size:12px; font-weight:700; color:var(--text-faint); margin:0 0 8px 4px;}
+.set-row{display:flex; align-items:center; gap:12px; padding:13px 14px; border-bottom:1px solid var(--border);}
+.set-row:last-child{border-bottom:none;}
+.set-row .ic{width:32px; height:32px; border-radius:9px; background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;}
+.set-row .t{font-size:13.5px; font-weight:600; flex:1;}
+.set-row .v{font-size:12.5px; color:var(--text-dim);}
+.chev{color:var(--text-faint); font-size:13px;}
+
+/* ---------- add sheet segmented ---------- */
+.type-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:4px 16px 6px;}
+.type-card{background:var(--surface); border:1.5px solid var(--border); border-radius:16px; padding:16px 10px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px; border:none;}
+.type-card .em{font-size:26px;}
+.type-card .t{font-size:12.5px; font-weight:700;}
+
+.note{background:var(--warn-soft); color:var(--warn); border-radius:12px; padding:11px 13px; font-size:11.5px; line-height:1.7; margin:14px 16px 4px;}
+.brand-badge{display:flex; align-items:center; gap:10px; padding:0 2px 18px;}
+.brand-badge .em{font-size:22px;}
+.brand-badge .t{font-size:16px; font-weight:700;}
+</style>
+</head>
+<body data-theme="light">
+<div id="root"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================= DEMO DATA & STATE =============================
+   بيانات تجريبية فقط لأغراض العرض — لا تُستخدم بيانات حقيقية.
+   ملاحظة معمارية: في نسخة الإنتاج يجب تخزين البيانات الحساسة بعد تشفيرها
+   محليًا (مثل Android Keystore / SQLCipher) ولا يجب أن تُقرأ كنص عادي أبدًا،
+   لا من قبل المطور ولا من الخادم. هذا النموذج يحتفظ بالحالة في الذاكرة فقط
+   خلال الجلسة الحالية (لا localStorage) توافقًا مع بيئة العرض. */
+
+let uid = 100;
+const newId = () => 'it_' + (uid++);
+
+const state = {
+  theme: 'light',
+  route: 'dashboard', // onboard-welcome, onboard-create, onboard-confirm, onboard-bio, lock, dashboard, category, generator, security, settings
+  locked: false,
+  masterSet: false, // هل قام المستخدم بإنشاء كلمة مرور اختيارية لحماية التطبيق؟
+  masterPassword: null, // في الذاكرة فقط أثناء الجلسة المفتوحة، لا يُحفظ أبدًا في localStorage
+  cryptoKey: null, // مفتاح AES-256 المشتق من كلمة المرور، في الذاكرة فقط
+  encSalt: null, // الملح المستخدم لاشتقاق المفتاح (غير سرّي، يُحفظ لإعادة الاشتقاق لاحقًا)
+  bioEnabled: false,
+  pinBuffer: '',
+  pinError: false,
+  categoryType: null,
+  search: '',
+  modal: null, // {type:'detail'|'add'|'addPickType', itemType, item}
+  revealed: new Set(),
+  toastTimer: null,
+  clipTimer: null,
+  editDraft: null,
+  autoLockMinutes: 1, // -1 = تعطيل، 0 = فورًا عند الخروج، رقم = دقائق الخمول
+  lastActivity: Date.now(),
+  hiddenAt: null,
+  items: {
+    account: [
+      {id:newId(), fav:true, category:'شخصي', service:'Gmail', username:'sara.k', email:'sara.k.demo@example.com', password:'Demo#Pass91', url:'https://mail.google.com', notes:''},
+      {id:newId(), fav:false, category:'العمل', service:'Slack', username:'sara.k.work', email:'sara.work.demo@example.com', password:'Slack!2024x', url:'https://slack.com', notes:'مساحة عمل الفريق'},
+      {id:newId(), fav:false, category:'شخصي', service:'Instagram', username:'sara._k', email:'sara.k.demo@example.com', password:'insta123', url:'https://instagram.com', notes:''},
+    ],
+    bank: [
+      {id:newId(), fav:true, category:'البنوك', bankName:'مصرف الديار (تجريبي)', holder:'سارة خالد', account:'0123456789012', iban:'SA0300000000123456789012', username:'sara.k', password:'Bank$ecure77', notes:''},
+    ],
+    card: [
+      {id:newId(), fav:false, category:'البنوك', cardName:'بطاقة الراتب', bankName:'مصرف الديار (تجريبي)', holder:'SARA K', number:'4111222233334444', expiry:'09/28', cvv:'123', notes:''},
+    ],
+    gov: [
+      {id:newId(), fav:false, category:'الحكومة', entity:'منصة أبشر (تجريبي)', username:'1029384756', password:'Gov#Demo55', nationalId:'1029384756', url:'https://absher.sa', notes:''},
+    ],
+    note: [
+      {id:newId(), fav:false, category:'شخصي', title:'رمز خزنة المنزل', content:'الرمز: 4471 — يُغيّر كل ستة أشهر.', notes:''},
+    ],
+  },
+};
+
+const TYPE_META = {
+  account: {label:'الحسابات وكلمات المرور', short:'حساب', em:'🔐', color:'accent'},
+  bank:    {label:'البنوك', short:'بنك', em:'🏦', color:'accent'},
+  card:    {label:'البطاقات', short:'بطاقة', em:'💳', color:'accent'},
+  gov:     {label:'الحسابات الحكومية', short:'حساب حكومي', em:'🏛️', color:'accent'},
+  note:    {label:'الملاحظات السرية', short:'ملاحظة', em:'📝', color:'accent'},
+};
+
+const CATEGORIES = ['شخصي','العمل','البنوك','الحكومة','التسوق'];
+
+/* ============================= HELPERS ============================= */
+function $(sel, el=document){ return el.querySelector(sel); }
+function el(tag, cls, html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!==undefined) e.innerHTML=html; return e; }
+function esc(s){ return (s??'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function showToast(msg, icon){
+  const t = $('#toast');
+  t.innerHTML = (icon?`<span>${icon}</span>`:'') + `<span>${esc(msg)}</span>`;
+  t.classList.add('show');
+  clearTimeout(state.toastTimer);
+  state.toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+function copyText(text, label, sensitive){
+  const doCopy = () => {
+    try{
+      navigator.clipboard.writeText(text);
+    }catch(e){
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); }catch(err){}
+      document.body.removeChild(ta);
+    }
+  };
+  doCopy();
+  showToast(sensitive ? `تم نسخ ${label} — سيُمسح خلال 20 ثانية` : `تم نسخ ${label}`, '✅');
+  if(sensitive){
+    clearTimeout(state.clipTimer);
+    state.clipTimer = setTimeout(()=>{
+      try{ navigator.clipboard.writeText(''); }catch(e){}
+    }, 20000);
+  }
+}
+
+function maskMiddle(v){
+  if(!v) return '';
+  const s = v.toString();
+  if(s.length<=4) return '•'.repeat(s.length);
+  return '•'.repeat(Math.max(0,s.length-4)) + s.slice(-4);
+}
+function maskCard(v){
+  const s=(v||'').replace(/\s/g,'');
+  const last4 = s.slice(-4);
+  return `•••• •••• •••• ${last4}`;
+}
+function maskFull(v){ return '•'.repeat(Math.min(12,(v||'').length||8)); }
+
+/* ---------- استخراج بيانات الآيبان السعودي ---------- */
+// يتحقق من صحة الآيبان عبر خوارزمية mod-97 المعيارية (ISO 13616) ويستخرج رمز البنك ورقم الحساب
+function parseSaudiIban(raw){
+  const iban = (raw||'').replace(/\s/g,'').toUpperCase();
+  if(!/^SA\d{22}$/.test(iban)) return null;
+  const rearranged = iban.slice(4) + iban.slice(0,4);
+  const numeric = rearranged.replace(/[A-Z]/g, ch => (ch.charCodeAt(0)-55).toString());
+  let remainder = numeric;
+  while(remainder.length>9){
+    const chunk = remainder.slice(0,9);
+    remainder = (parseInt(chunk,10) % 97).toString() + remainder.slice(chunk.length);
+  }
+  const valid = (parseInt(remainder,10) % 97) === 1;
+  return { valid, bankCode: iban.slice(4,6), account: iban.slice(6) };
+}
+
+/* ---------- استخراج بيانات البطاقة ---------- */
+// كشف شبكة البطاقة عبر بادئات BIN المعيارية والمعروفة عالميًا
+function detectCardBrand(digits){
+  if(/^4\d*/.test(digits) && digits.length>=1) return 'Visa';
+  if(/^(5[1-5]|2[2-7])/.test(digits)) return 'Mastercard';
+  if(/^3[47]/.test(digits)) return 'American Express';
+  if(/^(6011|65)/.test(digits)) return 'Discover';
+  if(/^35/.test(digits)) return 'JCB';
+  return null;
+}
+// خوارزمية Luhn المعيارية للتحقق من صحة رقم البطاقة رياضيًا
+function luhnValid(digits){
+  if(digits.length<12) return null;
+  let sum=0, alt=false;
+  for(let i=digits.length-1;i>=0;i--){
+    let n=parseInt(digits[i],10);
+    if(alt){ n*=2; if(n>9) n-=9; }
+    sum+=n; alt=!alt;
+  }
+  return sum%10===0;
+}
+function formatCardDigits(digits){ return digits.replace(/(\d{4})(?=\d)/g,'$1 '); }
+
+/* ---------- مسح البطاقة بالكاميرا (OCR داخل الجهاز بالكامل) ---------- */
+// يتم تحميل مكتبة Tesseract.js (مفتوحة المصدر لقراءة النصوص من الصور) عند أول استخدام فقط
+let tesseractLoadPromise = null;
+function loadTesseract(){
+  if(window.Tesseract) return Promise.resolve();
+  if(tesseractLoadPromise) return tesseractLoadPromise;
+  tesseractLoadPromise = new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.onload = ()=>resolve();
+    s.onerror = ()=>reject(new Error('تعذّر تحميل مكتبة القراءة، تحقق من اتصال الإنترنت'));
+    document.head.appendChild(s);
+  });
+  return tesseractLoadPromise;
+}
+// استخراج رقم البطاقة وتاريخ الانتهاء من النص المستخرج من الصورة (بحث بأنماط قياسية للبطاقات)
+function parseCardOcrText(text){
+  const result = {};
+  const digitGroups = text.match(/(?:\d[\s\-]?){12,19}\d/g) || [];
+  let best = null;
+  digitGroups.forEach(g=>{
+    const clean = g.replace(/[^\d]/g,'');
+    if(clean.length>=13 && clean.length<=19){
+      if(!best) best = clean;
+      else if(luhnValid(clean) && !luhnValid(best)) best = clean;
+    }
+  });
+  if(best) result.number = best;
+  const expMatch = text.match(/(0[1-9]|1[0-2])\s*[\/\-]\s*(\d{2}|\d{4})/);
+  if(expMatch){
+    let mm = expMatch[1];
+    let yy = expMatch[2];
+    if(yy.length===4) yy = yy.slice(2);
+    result.expiry = `${mm}/${yy}`;
+  }
+  return result;
+}
+async function scanCardImage(file, statusEl){
+  statusEl.textContent = '🔎 جارٍ تحميل أداة القراءة…';
+  try{
+    await loadTesseract();
+    statusEl.textContent = '📷 جارٍ تحليل الصورة…';
+    const { data: { text } } = await window.Tesseract.recognize(file, 'eng');
+    const info = parseCardOcrText(text);
+    if(!info.number && !info.expiry){
+      statusEl.textContent = '⚠️ لم أستطع قراءة البيانات بوضوح، أدخلها يدويًا';
+      return null;
+    }
+    statusEl.textContent = '✅ تم الاستخراج — تحقق من البيانات قبل الحفظ';
+    return info;
+  }catch(e){
+    statusEl.textContent = '⚠️ تعذّرت قراءة الصورة، أدخل البيانات يدويًا';
+    return null;
+  }
+}
+
+function passwordStrength(pw){
+  if(!pw) return {score:0, label:'—', color:'var(--text-faint)'};
+  let score=0;
+  if(pw.length>=8) score++;
+  if(pw.length>=12) score++;
+  if(/[A-Z]/.test(pw)) score++;
+  if(/[0-9]/.test(pw)) score++;
+  if(/[^A-Za-z0-9]/.test(pw)) score++;
+  const levels=[
+    {label:'ضعيفة جدًا', color:'var(--danger)'},
+    {label:'ضعيفة', color:'var(--danger)'},
+    {label:'متوسطة', color:'var(--warn)'},
+    {label:'جيدة', color:'var(--warn)'},
+    {label:'قوية', color:'var(--safe)'},
+    {label:'قوية جدًا', color:'var(--safe)'},
+  ];
+  return {score, ...levels[Math.min(score,5)]};
+}
+
+function allItemsFlat(){
+  const out=[];
+  Object.keys(state.items).forEach(type=>{
+    state.items[type].forEach(it=>out.push({...it, __type:type}));
+  });
+  return out;
+}
+
+function itemTitle(it, type){
+  if(type==='account') return it.service;
+  if(type==='bank') return it.bankName;
+  if(type==='card') return it.cardName;
+  if(type==='gov') return it.entity;
+  if(type==='note') return it.title;
+}
+function itemSubtitle(it, type){
+  if(type==='account') return it.username || it.email;
+  if(type==='bank') return maskMiddle(it.iban);
+  if(type==='card') return maskCard(it.number);
+  if(type==='gov') return it.username;
+  if(type==='note') return (it.content||'').slice(0,34);
+}
+
+function searchItems(query){
+  const q = query.trim().toLowerCase();
+  if(!q) return [];
+  const kw = {
+    'بنك':'bank','بنوك':'bank','بطاقة':'card','بطاقات':'card','حكوم':'gov',
+    'ملاحظ':'note','حساب':'account','iban':'field:iban','ايبان':'field:iban'
+  };
+  let typeFilter=null, fieldFilter=null;
+  for(const k in kw){
+    if(q.includes(k)){
+      if(kw[k].startsWith('field:')) fieldFilter=kw[k].split(':')[1];
+      else typeFilter=kw[k];
+    }
+  }
+  return allItemsFlat().filter(it=>{
+    if(typeFilter && it.__type!==typeFilter && !fieldFilter) return true && matchText(it,q);
+    if(fieldFilter) return (it[fieldFilter]||'').toLowerCase().includes(q.replace(/[^a-z0-9]/g,'')) || matchText(it,q);
+    return matchText(it,q);
+  });
+}
+function matchText(it,q){
+  const hay = Object.values(it).filter(v=>typeof v==='string').join(' ').toLowerCase();
+  return hay.includes(q);
+}
+
+/* ============================= LOCAL PERSISTENCE + ENCRYPTION =============================
+   بدون كلمة مرور: تُحفظ البيانات محليًا كنص عادي (كما كان سابقًا) — ملائم للاستخدام السريع.
+   بعد إنشاء كلمة مرور للتطبيق: يتم تشفير البيانات فعليًا بمعيار AES-256-GCM عبر Web Crypto API،
+   والمفتاح يُشتق من كلمة المرور نفسها عبر PBKDF2 (150000 تكرار) — كلمة المرور لا تُخزَّن أبدًا،
+   لا في الذاكرة الدائمة ولا في localStorage. فك التشفير الناجح هو نفسه التحقق من كلمة المرور. */
+const STORAGE_KEY = 'khazna_vault_data_v1';       // بيانات عامة غير حساسة + بيانات عادية إذا لا توجد كلمة مرور
+const ENC_STORAGE_KEY = 'khazna_vault_secure_v1'; // البيانات المشفّرة (تُستخدم فقط عند وجود كلمة مرور)
+
+const textEnc = new TextEncoder();
+const textDec = new TextDecoder();
+function bufToB64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+function b64ToBuf(b64){
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+  return arr.buffer;
+}
+function hasWebCrypto(){ return !!(window.crypto && window.crypto.subtle); }
+
+// يشتق مفتاح AES-256 من كلمة المرور. مرّر saltB64 موجودًا لإعادة اشتقاق نفس المفتاح، أو اتركه فارغًا لإنشاء ملح جديد.
+async function deriveKey(password, saltB64){
+  const salt = saltB64 ? new Uint8Array(b64ToBuf(saltB64)) : crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey('raw', textEnc.encode(password), {name:'PBKDF2'}, false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt, iterations:150000, hash:'SHA-256'},
+    keyMaterial,
+    {name:'AES-GCM', length:256},
+    false,
+    ['encrypt','decrypt']
+  );
+  return {key, saltB64: bufToB64(salt.buffer)};
+}
+async function encryptJson(key, obj){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const cipherBuf = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, textEnc.encode(JSON.stringify(obj)));
+  return { iv: bufToB64(iv.buffer), data: bufToB64(cipherBuf) };
+}
+async function decryptJson(key, payload){
+  const iv = new Uint8Array(b64ToBuf(payload.iv));
+  const plainBuf = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, b64ToBuf(payload.data));
+  return JSON.parse(textDec.decode(plainBuf));
+}
+function emptyItemsTemplate(){ return {account:[], bank:[], card:[], gov:[], note:[]}; }
+function recomputeUidFromItems(){
+  let maxId = 99;
+  Object.values(state.items||{}).forEach(list=>{
+    (list||[]).forEach(it=>{
+      const n = parseInt(String(it.id||'').replace('it_',''), 10);
+      if(!isNaN(n) && n>maxId) maxId = n;
+    });
+  });
+  uid = maxId + 1;
+}
+
+function saveMetaToStorage(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      theme: state.theme,
+      masterSet: state.masterSet,
+      salt: state.masterSet ? state.encSalt : null,
+      bioEnabled: state.bioEnabled,
+      autoLockMinutes: state.autoLockMinutes,
+      // العناصر تُحفظ هنا كنص عادي فقط إذا لم تُفعَّل كلمة مرور التطبيق
+      items: state.masterSet ? undefined : state.items,
+    }));
+  }catch(e){ /* تجاهل أخطاء التخزين (مثل وضع التصفح الخاص) */ }
+}
+async function saveEncryptedItems(){
+  if(!state.masterSet || !state.cryptoKey) return;
+  try{
+    const payload = await encryptJson(state.cryptoKey, state.items);
+    localStorage.setItem(ENC_STORAGE_KEY, JSON.stringify(payload));
+  }catch(e){ console.error('encryption save failed', e); }
+}
+function saveToStorage(){
+  saveMetaToStorage();
+  if(state.masterSet && state.cryptoKey) saveEncryptedItems(); // غير متزامن، لا يوقف الواجهة
+}
+
+function loadFromStorage(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    if(data && data.theme) state.theme = data.theme;
+    if(data && data.masterSet && data.salt){
+      state.masterSet = true;
+      state.encSalt = data.salt;
+      state.bioEnabled = !!data.bioEnabled;
+      state.autoLockMinutes = (typeof data.autoLockMinutes==='number') ? data.autoLockMinutes : 1;
+      // البيانات مشفّرة على القرص؛ لا يمكن قراءتها إلا بعد إدخال كلمة المرور الصحيحة في شاشة القفل
+      state.items = emptyItemsTemplate();
+      state.locked = true;
+      state.route = 'lock';
+    } else if(data && data.items){
+      state.items = data.items;
+      recomputeUidFromItems();
+    }
+  }catch(e){ /* بيانات محفوظة تالفة أو غير موجودة */ }
+}
+loadFromStorage();
+
+// قفل الخزنة: يمسح البيانات المفكوكة والمفتاح من الذاكرة، ولا يبقي شيئًا حساسًا إلا بعد إعادة إدخال كلمة المرور
+function lockVault(){
+  if(!state.masterSet) return;
+  state.items = emptyItemsTemplate();
+  state.cryptoKey = null;
+  state.masterPassword = null;
+  state.locked = true; state.pinBuffer=''; state.pinError=false; state.modal=null; state.route='lock';
+}
+
+/* ============================= RENDER ROOT ============================= */
+function render(){
+  saveToStorage();
+  document.body.setAttribute('data-theme', state.theme);
+  const root = $('#root');
+  root.innerHTML = '';
+
+  if(['onboard-welcome','onboard-create','onboard-confirm','onboard-bio'].includes(state.route)){
+    root.appendChild(renderOnboarding());
+    return;
+  }
+  if(state.route==='lock'){
+    root.appendChild(renderLock());
+    return;
+  }
+
+  const screen = el('div','screen');
+  if(state.route==='dashboard') screen.appendChild(renderDashboard());
+  else if(state.route==='category') screen.appendChild(renderCategory());
+  else if(state.route==='generator') screen.appendChild(renderGenerator());
+  else if(state.route==='security') screen.appendChild(renderSecurity());
+  else if(state.route==='settings') screen.appendChild(renderSettings());
+  root.appendChild(screen);
+  root.appendChild(renderBottomNav());
+
+  if(state.modal) root.appendChild(renderModal());
+}
+
+/* ============================= ONBOARDING ============================= */
+function renderOnboarding(){
+  const wrap = el('div','onb');
+
+  if(state.route==='onboard-welcome'){
+    wrap.innerHTML = `
+      <div class="spacer"></div>
+      <div class="vault-mark">🔐</div>
+      <h1>أهلًا بك في خزنة</h1>
+      <p>مكان واحد آمن لحفظ حساباتك وبطاقاتك وبياناتك الحكومية وملاحظاتك السرية — بدل تشتيتها في تطبيق الملاحظات.</p>
+      <div class="feature"><span class="em">🛡️</span> تشفير محلي لكل بياناتك الحساسة</div>
+      <div class="feature"><span class="em">⚡</span> بحث ونسخ فوري لأي معلومة</div>
+      <div class="feature"><span class="em">🌙</span> يدعم الوضع الليلي والعربية RTL</div>
+      <div class="spacer"></div>
+      <div class="dots"><span class="on"></span><span></span><span></span></div>
+      <button class="btn btn-primary" id="go">ابدأ الآن</button>
+    `;
+    wrap.querySelector('#go').onclick = ()=>{ state.route='onboard-create'; render(); };
+  }
+
+  else if(state.route==='onboard-create'){
+    wrap.innerHTML = `
+      <div class="vault-mark">🔑</div>
+      <h1>أنشئ كلمة المرور الرئيسية</h1>
+      <p>هذه الكلمة هي المفتاح الوحيد لخزنتك. اختر كلمة قوية ولا تشاركها مع أحد — لن نتمكن من استرجاعها نيابةً عنك.</p>
+      <div class="onb-input-wrap" style="position:relative;">
+        <input class="onb-input" id="pw1" type="password" placeholder="كلمة المرور الرئيسية" autocomplete="new-password">
+      </div>
+      <div class="strength-bar"><i id="sbar"></i></div>
+      <div class="strength-label" id="slabel">اكتب كلمة مرور لعرض قوتها</div>
+      <div class="dots"><span></span><span class="on"></span><span></span></div>
+      <button class="btn btn-primary" id="next" disabled>متابعة</button>
+    `;
+    const input = wrap.querySelector('#pw1');
+    const bar = wrap.querySelector('#sbar');
+    const label = wrap.querySelector('#slabel');
+    const nextBtn = wrap.querySelector('#next');
+    input.oninput = ()=>{
+      const s = passwordStrength(input.value);
+      bar.style.width = (s.score/5*100)+'%';
+      bar.style.background = s.color;
+      label.textContent = input.value ? `قوة كلمة المرور: ${s.label}` : 'اكتب كلمة مرور لعرض قوتها';
+      label.style.color = s.color;
+      nextBtn.disabled = input.value.length < 6;
+    };
+    nextBtn.onclick = ()=>{
+      state.editDraft = input.value;
+      state.route='onboard-confirm'; render();
+    };
+  }
+
+  else if(state.route==='onboard-confirm'){
+    wrap.innerHTML = `
+      <div class="vault-mark">✅</div>
+      <h1>أكّد كلمة المرور</h1>
+      <p>أعد كتابة كلمة المرور الرئيسية للتأكد من مطابقتها.</p>
+      <input class="onb-input" id="pw2" type="password" placeholder="تأكيد كلمة المرور" autocomplete="new-password">
+      <div class="strength-label" id="err" style="color:var(--danger);"></div>
+      <div class="dots"><span></span><span></span><span class="on"></span></div>
+      <button class="btn btn-primary" id="confirm" disabled>تأكيد وإنشاء الخزنة</button>
+    `;
+    const input = wrap.querySelector('#pw2');
+    const err = wrap.querySelector('#err');
+    const btn = wrap.querySelector('#confirm');
+    input.oninput = ()=>{
+      const match = input.value.length>0 && input.value===state.editDraft;
+      btn.disabled = !match;
+      err.textContent = (input.value.length>0 && !match) ? 'كلمة المرور غير متطابقة' : '';
+    };
+    btn.onclick = ()=>{
+      state.masterPassword = state.editDraft;
+      state.masterSet = true;
+      state.editDraft = null;
+      state.route='onboard-bio'; render();
+    };
+  }
+
+  else if(state.route==='onboard-bio'){
+    wrap.innerHTML = `
+      <div class="vault-mark">👆</div>
+      <h1>تفعيل البصمة</h1>
+      <p>يمكنك فتح الخزنة لاحقًا ببصمتك أو بالتعرف على الوجه بدل كتابة كلمة المرور في كل مرة.</p>
+      <div class="card" style="background:rgba(255,255,255,.07); border:1.5px solid rgba(255,255,255,.14); border-radius:16px; padding:16px; margin-bottom:20px;">
+        <div class="toggle-row" style="padding:0;">
+          <span class="lbl" style="color:#fff;">تفعيل البصمة / Face ID</span>
+          <button class="switch" id="bioSwitch"></button>
+        </div>
+      </div>
+      <div class="dots"><span></span><span></span><span class="on"></span></div>
+      <button class="btn btn-primary" id="finish">الدخول إلى الخزنة</button>
+      <button class="btn" id="skip" style="background:none; color:rgba(255,255,255,.5); margin-top:10px;">تخطي الآن</button>
+    `;
+    const sw = wrap.querySelector('#bioSwitch');
+    sw.onclick = ()=>{ state.bioEnabled=!state.bioEnabled; sw.classList.toggle('on', state.bioEnabled); };
+    const enter = ()=>{ state.locked=false; state.route='dashboard'; state.lastActivity=Date.now(); render(); showToast('تم إنشاء الخزنة بنجاح','🎉'); };
+    wrap.querySelector('#finish').onclick = enter;
+    wrap.querySelector('#skip').onclick = enter;
+  }
+
+  return wrap;
+}
+
+/* ============================= LOCK SCREEN ============================= */
+function renderLock(){
+  const wrap = el('div','onb');
+  wrap.style.justifyContent='center';
+  wrap.innerHTML = `
+    <div class="spacer"></div>
+    <div style="text-align:center;">
+      <div class="vault-mark" style="margin:0 auto 18px;">🔐</div>
+      <h1 style="text-align:center;">الخزنة مقفلة</h1>
+      <p style="text-align:center;" id="lockSub">أدخل كلمة المرور لفك تشفير بياناتك</p>
+    </div>
+    <div class="dot-pins" id="pins"></div>
+    <div class="keypad" id="keypad"></div>
+    <div class="spacer"></div>
+  `;
+  const pinsWrap = wrap.querySelector('#pins');
+  const keypad = wrap.querySelector('#keypad');
+  const sub = wrap.querySelector('#lockSub');
+  let busy = false;
+
+  function drawPins(){
+    pinsWrap.innerHTML='';
+    const len = Math.max(6, state.pinBuffer.length);
+    for(let i=0;i<Math.min(len,10);i++){
+      const s = el('span');
+      if(state.pinError) s.classList.add('err');
+      else if(i<state.pinBuffer.length) s.classList.add('filled');
+      pinsWrap.appendChild(s);
+    }
+  }
+  drawPins();
+
+  const keys = ['1','2','3','4','5','6','7','8','9','⌫','0','✓'];
+  keys.forEach(k=>{
+    const b = el('button', k==='⌫'||k==='✓'?'ghost':'', k);
+    b.onclick = ()=>{
+      if(busy) return;
+      if(k==='⌫'){ state.pinBuffer = state.pinBuffer.slice(0,-1); state.pinError=false; }
+      else if(k==='✓'){ tryUnlock(); return; }
+      else { state.pinBuffer += k; state.pinError=false; }
+      drawPins();
+    };
+    keypad.appendChild(b);
+  });
+
+  async function tryUnlock(){
+    if(busy || !state.pinBuffer) return;
+    if(!hasWebCrypto()){
+      sub.textContent = '⚠️ التشفير يحتاج فتح الملف عبر HTTPS (مثل GitHub Pages) وليس مباشرة من الجهاز';
+      return;
+    }
+    busy = true; sub.textContent = 'جارٍ فك التشفير…';
+    try{
+      const {key} = await deriveKey(state.pinBuffer, state.encSalt);
+      const encRaw = localStorage.getItem(ENC_STORAGE_KEY);
+      const items = encRaw ? await decryptJson(key, JSON.parse(encRaw)) : emptyItemsTemplate();
+      state.items = items;
+      state.cryptoKey = key;
+      state.masterPassword = state.pinBuffer;
+      recomputeUidFromItems();
+      state.locked=false; state.pinBuffer=''; state.route='dashboard'; state.lastActivity=Date.now(); render();
+    }catch(e){
+      busy = false; sub.textContent = 'أدخل كلمة المرور لفك تشفير بياناتك';
+      state.pinError=true; drawPins();
+      setTimeout(()=>{ state.pinBuffer=''; state.pinError=false; drawPins(); }, 500);
+    }
+  }
+
+  // allow typing with keyboard too, since master password may include letters/symbols
+  wrap.tabIndex=0;
+  setTimeout(()=>wrap.focus(),50);
+  wrap.addEventListener('keydown', (e)=>{
+    if(e.key==='Enter'){ tryUnlock(); return; }
+    if(e.key==='Backspace'){ state.pinBuffer=state.pinBuffer.slice(0,-1); state.pinError=false; drawPins(); return; }
+    if(e.key.length===1){ state.pinBuffer+=e.key; state.pinError=false; drawPins(); }
+  });
+
+  return wrap;
+}
+
+/* ============================= DASHBOARD ============================= */
+function renderDashboard(){
+  const frag = el('div');
+  const counts = {};
+  Object.keys(state.items).forEach(t=>counts[t]=state.items[t].length);
+
+  frag.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <div>
+        <p class="sub">مساء الخير 👋</p>
+        <h1 class="h1">خزنتك جاهزة</h1>
+      </div>
+      <button class="icon-btn" id="themeBtn">${state.theme==='light'?'🌙':'☀️'}</button>
+    </div>
+    <div class="search-bar" id="searchBar">
+      <span>🔍</span>
+      <input id="searchInput" placeholder="ابحث عن أي شيء… جرّب: Gmail، بنك، IBAN" value="${esc(state.search)}">
+    </div>
+    <div id="searchResultsWrap"></div>
+    <div id="dashBody"></div>
+  `;
+  const dashBody = frag.querySelector('#dashBody');
+  const resultsWrap = frag.querySelector('#searchResultsWrap');
+
+  function renderDashBody(){
+    dashBody.innerHTML='';
+    // stats
+    const stats = el('div','stats-grid');
+    const statDefs = [
+      {n:counts.account, l:'حسابات', em:'🔐'},
+      {n:counts.bank, l:'بنوك', em:'🏦'},
+      {n:counts.card, l:'بطاقات', em:'💳'},
+      {n:counts.gov, l:'حكومية', em:'🏛️'},
+    ];
+    statDefs.forEach(s=>{
+      const c = el('div','stat-card', `<div class="n">${s.n}</div><div class="l">${s.em} ${s.l}</div>`);
+      stats.appendChild(c);
+    });
+    dashBody.appendChild(stats);
+
+    // favorites
+    const favs = allItemsFlat().filter(i=>i.fav);
+    if(favs.length){
+      const st = el('div','section-title', `<h3>⭐ المفضلة</h3>`);
+      dashBody.appendChild(st);
+      const scroll = el('div','fav-scroll');
+      favs.forEach(it=>{
+        const chip = el('div','fav-chip',
+          `<div class="em">${TYPE_META[it.__type].em}</div><div class="t">${esc(itemTitle(it,it.__type))}</div><div class="s">${esc(itemSubtitle(it,it.__type))}</div>`);
+        chip.onclick = ()=>openDetail(it,it.__type);
+        scroll.appendChild(chip);
+      });
+      dashBody.appendChild(scroll);
+    }
+
+    // categories
+    dashBody.appendChild(el('div','section-title','<h3>التصنيفات</h3>'));
+    const grid = el('div','cat-grid');
+    Object.keys(TYPE_META).forEach(type=>{
+      const m = TYPE_META[type];
+      const c = el('button','cat-card',
+        `<div class="em">${m.em}</div><div class="t">${esc(m.label)}</div><div class="c">${counts[type]} عنصر</div>`);
+      c.onclick = ()=>{ state.categoryType=type; state.route='category'; render(); };
+      grid.appendChild(c);
+    });
+    dashBody.appendChild(grid);
+  }
+
+  function renderSearchResults(){
+    if(!state.search.trim()){ resultsWrap.innerHTML=''; resultsWrap.style.display='none'; dashBody.style.display='block'; renderDashBody(); return; }
+    dashBody.style.display='none';
+    resultsWrap.style.display='block';
+    const results = searchItems(state.search);
+    resultsWrap.innerHTML = `<div class="section-title" style="margin-top:16px;"><h3>نتائج البحث (${results.length})</h3></div>`;
+    if(!results.length){
+      resultsWrap.appendChild(el('div','empty-hint','<span class="em">🔎</span>لا توجد نتائج مطابقة'));
+      return;
+    }
+    results.forEach(it=>{
+      const row = buildItemRow(it, it.__type);
+      resultsWrap.appendChild(row);
+    });
+  }
+
+  renderDashBody();
+  const input = frag.querySelector('#searchInput');
+  input.oninput = ()=>{ state.search = input.value; renderSearchResults(); };
+  renderSearchResults();
+  frag.querySelector('#themeBtn').onclick = ()=>{ state.theme = state.theme==='light'?'dark':'light'; render(); };
+
+  return frag;
+}
+
+function buildItemRow(it, type){
+  const m = TYPE_META[type];
+  const row = el('div','item-row');
+  row.innerHTML = `
+    <div class="avatar">${m.em}</div>
+    <div class="info">
+      <div class="t">${esc(itemTitle(it,type))}</div>
+      <div class="s">${esc(itemSubtitle(it,type))}</div>
+    </div>
+    <button class="star ${it.fav?'on':''}">★</button>
+  `;
+  row.querySelector('.info').onclick = ()=>openDetail(it,type);
+  row.querySelector('.avatar').onclick = ()=>openDetail(it,type);
+  row.querySelector('.star').onclick = (e)=>{
+    e.stopPropagation();
+    it.fav = !it.fav;
+    render();
+  };
+  return row;
+}
+
+/* ============================= CATEGORY LIST ============================= */
+function renderCategory(){
+  const type = state.categoryType;
+  const m = TYPE_META[type];
+  const frag = el('div');
+  frag.innerHTML = `
+    <div class="topbar">
+      <button class="back-btn" id="back">→</button>
+      <div>
+        <h2 class="h2">${m.em} ${esc(m.label)}</h2>
+        <p class="sub">${state.items[type].length} عنصر</p>
+      </div>
+    </div>
+  `;
+  frag.querySelector('#back').onclick = ()=>{ state.route='dashboard'; render(); };
+
+  const list = el('div');
+  list.style.marginTop='16px';
+  if(!state.items[type].length){
+    list.appendChild(el('div','empty-hint', `<span class="em">${m.em}</span>لا توجد عناصر بعد — اضغط + لإضافة أول عنصر`));
+  } else {
+    state.items[type].forEach(it=> list.appendChild(buildItemRow({...it,__type:type}, type)));
+  }
+  frag.appendChild(list);
+
+  const addBtn = el('button','btn btn-primary','+ إضافة ' + m.short);
+  addBtn.style.marginTop='16px';
+  addBtn.onclick = ()=> openAddForm(type);
+  frag.appendChild(addBtn);
+
+  return frag;
+}
+
+/* ============================= DETAIL SHEET ============================= */
+function openDetail(it, type){
+  state.revealed = new Set();
+  state.modal = {kind:'detail', type, item: it};
+  render();
+}
+
+function fieldSpec(type){
+  if(type==='account') return [
+    {k:'service', l:'اسم الخدمة'}, {k:'username', l:'اسم المستخدم', copy:true},
+    {k:'email', l:'البريد الإلكتروني', copy:true},
+    {k:'password', l:'كلمة المرور', copy:true, secret:true},
+    {k:'url', l:'رابط الموقع', copy:true}, {k:'category', l:'التصنيف'}, {k:'notes', l:'ملاحظات'},
+  ];
+  if(type==='bank') return [
+    {k:'bankName', l:'اسم البنك'}, {k:'holder', l:'اسم صاحب الحساب'},
+    {k:'account', l:'رقم الحساب', copy:true, secret:true},
+    {k:'iban', l:'IBAN', copy:true, secret:true},
+    {k:'username', l:'اسم المستخدم', copy:true},
+    {k:'password', l:'كلمة المرور', copy:true, secret:true}, {k:'notes', l:'ملاحظات'},
+  ];
+  if(type==='card') return [
+    {k:'cardName', l:'اسم البطاقة'}, {k:'bankName', l:'اسم البنك'}, {k:'holder', l:'اسم حامل البطاقة'},
+    {k:'number', l:'رقم البطاقة', copy:true, secret:true, isCard:true},
+    {k:'expiry', l:'تاريخ الانتهاء'},
+    {k:'cvv', l:'رمز الأمان CVV', copy:true, secret:true}, {k:'notes', l:'ملاحظات'},
+  ];
+  if(type==='gov') return [
+    {k:'entity', l:'اسم المنصة'}, {k:'username', l:'اسم المستخدم', copy:true},
+    {k:'password', l:'كلمة المرور', copy:true, secret:true},
+  ];
+  if(type==='note') return [
+    {k:'title', l:'العنوان'}, {k:'content', l:'المحتوى', copy:true, secret:true, long:true},
+    {k:'category', l:'التصنيف'},
+  ];
+}
+
+function renderModal(){
+  const overlay = el('div','overlay show');
+  const sheet = el('div','sheet');
+  overlay.appendChild(sheet);
+  overlay.onclick = (e)=>{ if(e.target===overlay){ state.modal=null; render(); } };
+
+  if(state.modal.kind==='detail') buildDetailSheet(sheet);
+  else if(state.modal.kind==='pickType') buildPickTypeSheet(sheet);
+  else if(state.modal.kind==='addEdit') buildAddEditSheet(sheet);
+  else if(state.modal.kind==='appPassword') buildAppPasswordSheet(sheet, state.modal.mode);
+
+  return overlay;
+}
+
+function buildDetailSheet(sheet){
+  const {type, item} = state.modal;
+  const m = TYPE_META[type];
+  sheet.innerHTML = `<div class="sheet-handle"></div>`;
+  const head = el('div','sheet-head');
+  head.innerHTML = `<div style="display:flex; gap:8px;">
+      <button class="tiny-btn" id="editBtn">✏️</button>
+      <button class="tiny-btn" id="delBtn" style="color:var(--danger);">🗑️</button>
+    </div>
+    <button class="tiny-btn" id="closeBtn">✕</button>`;
+  sheet.appendChild(head);
+
+  const hero = el('div','detail-hero');
+  hero.innerHTML = `<div class="avatar">${m.em}</div><div class="t">${esc(itemTitle(item,type))}</div><div class="s">${esc(m.label)}</div>`;
+  sheet.appendChild(hero);
+
+  const actions = el('div','detail-actions');
+  const favBtn = el('button', 'btn ' + (item.fav?'btn-primary':'btn-ghost') , item.fav? '★ في المفضلة':'☆ إضافة للمفضلة');
+  favBtn.onclick = ()=>{ item.fav=!item.fav; render(); };
+  actions.appendChild(favBtn);
+  if(type==='account'){
+    const quickCopy = el('button','btn btn-outline','نسخ اسم المستخدم وكلمة المرور');
+    quickCopy.onclick = ()=> copyText(`${item.username||item.email}  /  ${item.password}`, 'بيانات الدخول', true);
+    actions.appendChild(quickCopy);
+  }
+  sheet.appendChild(actions);
+
+  const card = el('div','card sheet-body-card');
+  fieldSpec(type).forEach(f=>{
+    const val = item[f.k];
+    if(val===undefined) return;
+    if(!val && f.k!=='notes') { /* show even empty for structure? skip empty except notes */ }
+    const row = el('div','detail-field');
+    let displayVal = esc(val || '—');
+    const revealKey = item.id+'-'+f.k;
+    if(f.secret && val){
+      const revealed = state.revealed.has(revealKey);
+      displayVal = revealed ? `<span class="masked">${esc(val)}</span>` : `<span class="masked">${f.isCard? maskCard(val): maskFull(val)}</span>`;
+    }
+    row.innerHTML = `<div><div class="l">${esc(f.l)}</div><div class="v">${displayVal}</div></div>`;
+    const acts = el('div','acts');
+    if(f.secret && val){
+      const eyeBtn = el('button','tiny-btn', state.revealed.has(revealKey)?'🙈':'👁️');
+      eyeBtn.onclick = ()=>{
+        if(state.revealed.has(revealKey)) state.revealed.delete(revealKey);
+        else state.revealed.add(revealKey);
+        render();
+      };
+      acts.appendChild(eyeBtn);
+    }
+    if(f.copy && val){
+      const cBtn = el('button','tiny-btn','📋');
+      cBtn.onclick = ()=> copyText(val, f.l, !!f.secret);
+      acts.appendChild(cBtn);
+    }
+    if(acts.children.length) row.appendChild(acts);
+    card.appendChild(row);
+  });
+  sheet.appendChild(card);
+
+  head.querySelector('#closeBtn').onclick = ()=>{ state.modal=null; render(); };
+  head.querySelector('#editBtn').onclick = ()=>{ openAddForm(type, item); };
+  head.querySelector('#delBtn').onclick = ()=>{
+    if(confirm('هل تريد حذف هذا العنصر نهائيًا؟')){
+      state.items[type] = state.items[type].filter(i=>i.id!==item.id);
+      state.modal=null; render(); showToast('تم الحذف','🗑️');
+    }
+  };
+}
+
+/* ============================= ADD / PICK TYPE ============================= */
+function openAddSheet(){
+  state.modal = {kind:'pickType'};
+  render();
+}
+function buildPickTypeSheet(sheet){
+  sheet.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">ماذا تريد أن تضيف؟</div>`;
+  const grid = el('div','type-grid');
+  Object.keys(TYPE_META).forEach(type=>{
+    const m = TYPE_META[type];
+    const c = el('button','type-card', `<div class="em">${m.em}</div><div class="t">إضافة ${m.short}</div>`);
+    c.onclick = ()=> openAddForm(type);
+    grid.appendChild(c);
+  });
+  sheet.appendChild(grid);
+  const genBtn = el('button','btn btn-outline','🎲 مولّد كلمات مرور قوية');
+  genBtn.style.margin='14px 16px 0'; genBtn.style.width='calc(100% - 32px)';
+  genBtn.onclick = ()=>{ state.modal=null; state.route='generator'; render(); };
+  sheet.appendChild(genBtn);
+  const cancel = el('button','btn btn-ghost','إلغاء');
+  cancel.style.margin='10px 16px 0'; cancel.style.width='calc(100% - 32px)';
+  cancel.onclick = ()=>{ state.modal=null; render(); };
+  sheet.appendChild(cancel);
+}
+
+function openAddForm(type, existingItem){
+  state.modal = {kind:'addEdit', type, item: existingItem || null};
+  render();
+}
+
+/* ============================= APP PASSWORD (SETTINGS) ============================= */
+function buildAppPasswordSheet(sheet, mode){
+  const titles = {
+    create: {t:'إنشاء كلمة مرور للتطبيق', s:'ستُطلب منك هذه الكلمة في كل مرة تفتح فيها التطبيق، وسيتم تشفير بياناتك محليًا بها (AES-256)'},
+    change: {t:'تغيير كلمة المرور', s:'أدخل كلمة المرور الحالية ثم الجديدة — سيُعاد تشفير بياناتك بالكامل بالمفتاح الجديد'},
+    remove: {t:'إزالة كلمة المرور', s:'سيفتح التطبيق مباشرة بدون طلب كلمة مرور، وستُحفظ بياناتك كنص عادي غير مشفّر بعد ذلك'},
+  };
+  const info = titles[mode];
+  sheet.innerHTML = `<div class="sheet-handle"></div>`;
+  const head = el('div','sheet-head');
+  head.innerHTML = `<div class="brand-badge" style="padding:0;"><span class="em">🔑</span><span class="t">${info.t}</span></div><button class="tiny-btn" id="closeBtn">✕</button>`;
+  sheet.appendChild(head);
+  head.querySelector('#closeBtn').onclick = ()=>{ state.modal=null; render(); };
+
+  const form = el('div');
+  form.style.padding='6px 16px 4px';
+  form.appendChild(el('p','sub', info.s));
+
+  if((mode==='create' || mode==='change') && !hasWebCrypto()){
+    form.appendChild(el('div','field-hint','⚠️ متصفحك/الصفحة الحالية لا تدعم التشفير (Web Crypto). يجب فتح التطبيق عبر HTTPS — مثل رابط GitHub Pages بعد رفعه — وليس بفتح الملف مباشرة من الجهاز.'));
+  }
+
+  function pwField(labelText){
+    const field = el('div','field');
+    field.appendChild(el('label',null,labelText));
+    const wrap = el('div','pwd-wrap');
+    const input = el('input');
+    input.type='password'; input.autocomplete='off';
+    const eye = el('button','eye','👁️'); eye.type='button';
+    eye.onclick = ()=>{ input.type = input.type==='password'?'text':'password'; eye.textContent = input.type==='password'?'👁️':'🙈'; };
+    wrap.appendChild(input); wrap.appendChild(eye);
+    field.appendChild(wrap);
+    form.appendChild(field);
+    return input;
+  }
+
+  let currentInput=null, newInput=null, confirmInput=null;
+  if(mode==='change' || mode==='remove') currentInput = pwField('كلمة المرور الحالية');
+  if(mode==='create' || mode==='change'){
+    newInput = pwField('كلمة المرور الجديدة');
+    confirmInput = pwField('تأكيد كلمة المرور');
+  }
+
+  sheet.appendChild(form);
+
+  const saveBtn = el('button','btn btn-primary', mode==='remove' ? 'إزالة كلمة المرور' : 'حفظ');
+  saveBtn.style.margin='16px 16px 0'; saveBtn.style.width='calc(100% - 32px)';
+  if(mode==='remove') saveBtn.classList.add('btn-danger');
+
+  saveBtn.onclick = async ()=>{
+    if(currentInput && currentInput.value !== state.masterPassword){
+      showToast('كلمة المرور الحالية غير صحيحة','⚠️'); return;
+    }
+    if(mode==='remove'){
+      // إعادة الحفظ كنص عادي، ثم حذف النسخة المشفّرة نهائيًا
+      state.masterSet=false; state.cryptoKey=null; state.encSalt=null; state.masterPassword=null; state.bioEnabled=false;
+      try{ localStorage.removeItem(ENC_STORAGE_KEY); }catch(e){}
+      saveMetaToStorage();
+      state.modal=null; render(); showToast('تمت إزالة كلمة المرور — البيانات الآن غير مشفّرة','✅');
+      return;
+    }
+    if(!newInput.value || newInput.value.length<4){ showToast('اكتب كلمة مرور من 4 خانات على الأقل','⚠️'); return; }
+    if(newInput.value !== confirmInput.value){ showToast('كلمتا المرور غير متطابقتين','⚠️'); return; }
+    if(!hasWebCrypto()){ showToast('التشفير غير مدعوم؛ افتح التطبيق عبر HTTPS','⚠️'); return; }
+
+    saveBtn.disabled = true;
+    const originalLabel = saveBtn.textContent;
+    saveBtn.textContent = 'جارٍ التشفير…';
+    try{
+      const {key, saltB64} = await deriveKey(newInput.value, null); // ملح جديد دائمًا عند الإنشاء/التغيير
+      state.cryptoKey = key;
+      state.encSalt = saltB64;
+      state.masterPassword = newInput.value;
+      state.masterSet = true;
+      await saveEncryptedItems();
+      saveMetaToStorage();
+      state.modal=null; render();
+      showToast(mode==='create' ? '🔒 تم تفعيل كلمة المرور وتشفير بياناتك' : '🔒 تم تغيير كلمة المرور وإعادة التشفير', '✅');
+    }catch(e){
+      showToast('حدث خطأ أثناء التشفير، حاول مجددًا','⚠️');
+      saveBtn.disabled = false; saveBtn.textContent = originalLabel;
+    }
+  };
+  sheet.appendChild(saveBtn);
+}
+
+function formSpec(type){
+  if(type==='account') return [
+    {k:'service', l:'اسم الخدمة', req:true, ph:'مثال: Gmail'},
+    {k:'username', l:'اسم المستخدم', ph:'sara.k'},
+    {k:'email', l:'البريد الإلكتروني', ph:'name@example.com'},
+    {k:'password', l:'كلمة المرور', secret:true},
+    {k:'url', l:'رابط الموقع', ph:'https://'},
+    {k:'category', l:'التصنيف', select:true},
+    {k:'notes', l:'ملاحظات', long:true},
+  ];
+  if(type==='bank') return [
+    {k:'bankName', l:'اسم البنك', req:true},
+    {k:'holder', l:'اسم صاحب الحساب'},
+    {k:'account', l:'رقم الحساب'},
+    {k:'iban', l:'IBAN'},
+    {k:'username', l:'اسم المستخدم'},
+    {k:'password', l:'كلمة المرور', secret:true},
+    {k:'notes', l:'ملاحظات', long:true},
+  ];
+  if(type==='card') return [
+    {k:'cardName', l:'اسم البطاقة', req:true},
+    {k:'bankName', l:'اسم البنك'},
+    {k:'holder', l:'اسم حامل البطاقة'},
+    {k:'number', l:'رقم البطاقة'},
+    {k:'expiry', l:'تاريخ الانتهاء', ph:'MM/YY'},
+    {k:'cvv', l:'رمز الأمان CVV', secret:true},
+    {k:'notes', l:'ملاحظات', long:true},
+  ];
+  if(type==='gov') return [
+    {k:'entity', l:'اسم المنصة', req:true},
+    {k:'username', l:'اسم المستخدم'},
+    {k:'password', l:'كلمة المرور', secret:true},
+  ];
+  if(type==='note') return [
+    {k:'title', l:'العنوان', req:true},
+    {k:'content', l:'محتوى الملاحظة', long:true, secret:true},
+    {k:'category', l:'التصنيف', select:true},
+  ];
+}
+
+function buildAddEditSheet(sheet){
+  const {type, item} = state.modal;
+  const m = TYPE_META[type];
+  const isEdit = !!item;
+  sheet.innerHTML = `<div class="sheet-handle"></div>`;
+  const head = el('div','sheet-head');
+  head.innerHTML = `<div class="brand-badge" style="padding:0;"><span class="em">${m.em}</span><span class="t">${isEdit?'تعديل':'إضافة'} ${m.short}</span></div><button class="tiny-btn" id="closeBtn">✕</button>`;
+  sheet.appendChild(head);
+  head.querySelector('#closeBtn').onclick = ()=>{ state.modal=null; render(); };
+
+  const form = el('div');
+  form.style.padding='6px 16px 4px';
+  const draft = {...(item||{})};
+
+  formSpec(type).forEach(f=>{
+    const field = el('div','field');
+    const label = el('label',null, f.l + (f.req?' *':''));
+    field.appendChild(label);
+    let inputEl;
+    if(f.select){
+      inputEl = el('select');
+      inputEl.innerHTML = '<option value="">اختر تصنيفًا</option>' + CATEGORIES.map(c=>`<option value="${esc(c)}" ${draft[f.k]===c?'selected':''}>${esc(c)}</option>`).join('');
+      field.appendChild(inputEl);
+    } else if(f.long){
+      inputEl = el('textarea');
+      inputEl.placeholder = f.ph||'';
+      inputEl.value = draft[f.k]||'';
+      field.appendChild(inputEl);
+    } else if(f.secret){
+      const wrap = el('div','pwd-wrap');
+      inputEl = el('input');
+      inputEl.type='password'; inputEl.placeholder=f.ph||''; inputEl.value=draft[f.k]||'';
+      const eye = el('button','eye','👁️'); eye.type='button';
+      eye.onclick = ()=>{ inputEl.type = inputEl.type==='password'?'text':'password'; eye.textContent = inputEl.type==='password'?'👁️':'🙈'; };
+      wrap.appendChild(inputEl); wrap.appendChild(eye);
+      field.appendChild(wrap);
+      if(f.k==='password'){
+        const genLink = el('button','link-btn','🎲 احتجت كلمة مرور قوية؟ افتح المولّد');
+        genLink.type='button';
+        genLink.onclick = ()=>{ state.modal=null; state.route='generator'; render(); };
+        field.appendChild(genLink);
+      }
+    } else {
+      inputEl = el('input');
+      inputEl.type='text'; inputEl.placeholder=f.ph||''; inputEl.value=draft[f.k]||'';
+    }
+    if(!f.select && !f.long && !f.secret) field.appendChild(inputEl);
+    inputEl.dataset.key = f.k;
+    form.appendChild(field);
+  });
+
+  /* ---------- ذكاء إضافي: استخراج تلقائي من IBAN ورقم البطاقة ---------- */
+  if(type==='bank'){
+    const ibanInput = form.querySelector('[data-key="iban"]');
+    const accountInput = form.querySelector('[data-key="account"]');
+    if(ibanInput){
+      const hint = el('div','field-hint','اكتب الآيبان وسيتم استخراج رقم الحساب تلقائيًا (يدعم آيبان السعودية SA فقط)');
+      ibanInput.closest('.field').appendChild(hint);
+      ibanInput.addEventListener('input', ()=>{
+        const info = parseSaudiIban(ibanInput.value);
+        ibanInput.classList.remove('ok','bad');
+        if(!ibanInput.value){ hint.textContent='اكتب الآيبان وسيتم استخراج رقم الحساب تلقائيًا (يدعم آيبان السعودية SA فقط)'; return; }
+        if(info && info.valid){
+          ibanInput.classList.add('ok');
+          hint.textContent = '✅ آيبان صحيح — تم استخراج رقم الحساب تلقائيًا';
+          if(accountInput && (!accountInput.value || accountInput.dataset.autofilled==='1')){
+            accountInput.value = info.account;
+            accountInput.dataset.autofilled='1';
+          }
+        } else if(info && !info.valid){
+          ibanInput.classList.add('bad');
+          hint.textContent = '⚠️ رقم الآيبان غير صحيح، تحقق منه';
+        } else {
+          hint.textContent = 'اكتب الآيبان وسيتم استخراج رقم الحساب تلقائيًا (يدعم آيبان السعودية SA فقط)';
+        }
+      });
+      if(ibanInput.value) ibanInput.dispatchEvent(new Event('input'));
+    }
+    if(accountInput){
+      accountInput.addEventListener('input', ()=>{ accountInput.dataset.autofilled='0'; });
+    }
+  }
+  if(type==='card'){
+    const numberInput = form.querySelector('[data-key="number"]');
+    const cardNameInput = form.querySelector('[data-key="cardName"]');
+    const expiryInput = form.querySelector('[data-key="expiry"]');
+
+    // زر مسح البطاقة بالكاميرا واستخراج الرقم والتاريخ تلقائيًا
+    const scanWrap = el('div','field');
+    scanWrap.innerHTML = `
+      <button type="button" class="btn btn-outline" id="scanCardBtn">📷 التقط صورة البطاقة لتعبئة البيانات تلقائيًا</button>
+      <input type="file" id="scanCardFile" accept="image/*" capture="environment" style="display:none;">
+      <div class="field-hint" id="scanCardStatus">🔒 تتم قراءة الصورة داخل جهازك بالكامل، ولا تُرفع أو تُحفظ في أي مكان. الرمز الأمني CVV يُدخل يدويًا دائمًا لأسباب أمنية.</div>
+    `;
+    form.insertBefore(scanWrap, form.firstChild);
+    const scanBtn = scanWrap.querySelector('#scanCardBtn');
+    const scanFile = scanWrap.querySelector('#scanCardFile');
+    const scanStatus = scanWrap.querySelector('#scanCardStatus');
+    scanBtn.onclick = ()=> scanFile.click();
+    scanFile.onchange = async ()=>{
+      const file = scanFile.files[0];
+      if(!file) return;
+      scanBtn.disabled = true;
+      const info = await scanCardImage(file, scanStatus);
+      scanBtn.disabled = false;
+      if(info){
+        if(info.number && numberInput){ numberInput.value = info.number; numberInput.dispatchEvent(new Event('input')); }
+        if(info.expiry && expiryInput){ expiryInput.value = info.expiry; }
+      }
+      scanFile.value = '';
+    };
+
+    if(numberInput){
+      numberInput.setAttribute('inputmode','numeric');
+      const hint = el('div','field-hint','سيتم التعرف على نوع البطاقة تلقائيًا أثناء الكتابة');
+      numberInput.closest('.field').appendChild(hint);
+      numberInput.addEventListener('input', ()=>{
+        const cursor = numberInput.selectionStart;
+        const digitsBeforeCursor = numberInput.value.slice(0,cursor).replace(/\D/g,'').length;
+        const digits = numberInput.value.replace(/\D/g,'').slice(0,19);
+        const formatted = formatCardDigits(digits);
+        numberInput.value = formatted;
+        let count=0, newPos=formatted.length;
+        for(let i=0;i<formatted.length;i++){
+          if(/\d/.test(formatted[i])) count++;
+          if(count===digitsBeforeCursor){ newPos=i+1; break; }
+        }
+        numberInput.setSelectionRange(newPos,newPos);
+
+        numberInput.classList.remove('ok','bad');
+        const brand = detectCardBrand(digits);
+        if(brand && cardNameInput && (!cardNameInput.value || cardNameInput.dataset.autofilled==='1')){
+          cardNameInput.value = brand; cardNameInput.dataset.autofilled='1';
+        }
+        if(digits.length>=12){
+          const valid = luhnValid(digits);
+          numberInput.classList.add(valid?'ok':'bad');
+          hint.textContent = brand
+            ? (valid ? `✅ رقم بطاقة ${brand} صحيح` : `⚠️ الرقم لا يبدو صحيحًا، تحقق منه`)
+            : (valid ? '✅ رقم صحيح' : '⚠️ الرقم لا يبدو صحيحًا، تحقق منه');
+        } else {
+          hint.textContent = brand ? `تم التعرف على: ${brand}` : 'سيتم التعرف على نوع البطاقة تلقائيًا أثناء الكتابة';
+        }
+      });
+      if(numberInput.value) numberInput.dispatchEvent(new Event('input'));
+    }
+    if(cardNameInput){
+      cardNameInput.addEventListener('input', ()=>{ cardNameInput.dataset.autofilled='0'; });
+    }
+  }
+
+  const favField = el('div','toggle-row');
+  favField.innerHTML = `<span class="lbl">⭐ إضافة إلى المفضلة</span>`;
+  const favSwitch = el('button','switch' + (draft.fav?' on':''));
+  favSwitch.onclick = ()=> favSwitch.classList.toggle('on');
+  favField.appendChild(favSwitch);
+  form.appendChild(favField);
+
+  sheet.appendChild(form);
+
+  const saveBtn = el('button','btn btn-primary','حفظ');
+  saveBtn.style.margin='16px 16px 0'; saveBtn.style.width='calc(100% - 32px)';
+  saveBtn.onclick = ()=>{
+    const inputs = form.querySelectorAll('[data-key]');
+    const newData = {};
+    inputs.forEach(inp=> newData[inp.dataset.key] = inp.value.trim());
+    const reqField = formSpec(type).find(f=>f.req);
+    if(reqField && !newData[reqField.k]){ showToast('الحقل الأساسي مطلوب','⚠️'); return; }
+    newData.fav = favSwitch.classList.contains('on');
+    newData.category = newData.category || draft.category || '';
+    if(isEdit){
+      Object.assign(item, newData);
+      showToast('تم حفظ التعديلات','✅');
+    } else {
+      newData.id = newId();
+      state.items[type].push(newData);
+      showToast('تمت الإضافة بنجاح','✅');
+    }
+    state.modal=null; render();
+  };
+  sheet.appendChild(saveBtn);
+
+  if(isEdit){
+    const delBtn = el('button','btn btn-danger','حذف العنصر');
+    delBtn.style.margin='10px 16px 0'; delBtn.style.width='calc(100% - 32px)';
+    delBtn.onclick = ()=>{
+      if(confirm('حذف هذا العنصر نهائيًا؟')){
+        state.items[type] = state.items[type].filter(i=>i.id!==item.id);
+        state.modal=null; render(); showToast('تم الحذف','🗑️');
+      }
+    };
+    sheet.appendChild(delBtn);
+  }
+}
+
+/* ============================= PASSWORD GENERATOR ============================= */
+function generatePassword(opts){
+  const up='ABCDEFGHJKLMNPQRSTUVWXYZ', low='abcdefghijkmnpqrstuvwxyz', num='23456789', sym='!@#$%^&*_-+=';
+  let pool='';
+  if(opts.up) pool+=up;
+  if(opts.low) pool+=low;
+  if(opts.num) pool+=num;
+  if(opts.sym) pool+=sym;
+  if(!pool) pool = low+num;
+  let out='';
+  const arr = new Uint32Array(opts.len);
+  (window.crypto||{getRandomValues:a=>a.forEach((_,i)=>a[i]=Math.floor(Math.random()*1e9))}).getRandomValues(arr);
+  for(let i=0;i<opts.len;i++) out += pool[arr[i]%pool.length];
+  return out;
+}
+
+function renderGenerator(){
+  const frag = el('div');
+  const opts = {len:16, up:true, low:true, num:true, sym:true};
+  frag.innerHTML = `
+    <div class="topbar"><div><h1 class="h1">مولّد كلمات المرور</h1><p class="sub">ولّد كلمة مرور قوية وعشوائية بضغطة واحدة</p></div></div>
+    <div class="gen-display">
+      <div class="pw" id="pwOut"></div>
+      <div class="row-actions">
+        <button id="regen">🔄 توليد جديد</button>
+        <button id="copyGen">📋 نسخ</button>
+      </div>
+    </div>
+    <div class="card" style="padding:16px 16px 4px;">
+      <div class="slider-row"><span>طول كلمة المرور</span><span class="val" id="lenVal">16</span></div>
+      <input type="range" id="lenRange" min="6" max="32" value="16">
+      <div class="toggle-row"><span class="lbl">أحرف كبيرة (A-Z)</span><button class="switch on" data-k="up"></button></div>
+      <div class="toggle-row"><span class="lbl">أحرف صغيرة (a-z)</span><button class="switch on" data-k="low"></button></div>
+      <div class="toggle-row"><span class="lbl">أرقام (0-9)</span><button class="switch on" data-k="num"></button></div>
+      <div class="toggle-row"><span class="lbl">رموز (!@#$)</span><button class="switch on" data-k="sym"></button></div>
+    </div>
+  `;
+  const pwOut = frag.querySelector('#pwOut');
+  const lenVal = frag.querySelector('#lenVal');
+  const lenRange = frag.querySelector('#lenRange');
+
+  function regen(){ opts.len=+lenRange.value; pwOut.textContent = generatePassword(opts); }
+  frag.querySelector('#regen').onclick = regen;
+  frag.querySelector('#copyGen').onclick = ()=> copyText(pwOut.textContent, 'كلمة المرور', true);
+  lenRange.oninput = ()=>{ lenVal.textContent=lenRange.value; regen(); };
+  frag.querySelectorAll('.switch[data-k]').forEach(sw=>{
+    sw.onclick = ()=>{
+      sw.classList.toggle('on');
+      opts[sw.dataset.k] = sw.classList.contains('on');
+      regen();
+    };
+  });
+  regen();
+  return frag;
+}
+
+/* ============================= SECURITY CENTER ============================= */
+function renderSecurity(){
+  const frag = el('div');
+  const allPw = allItemsFlat().filter(i=>i.password).map(i=>({...i}));
+  const weak = allPw.filter(i=> passwordStrength(i.password).score<=2);
+  const seen = {}; const dupSet=new Set();
+  allPw.forEach(i=>{ seen[i.password]=(seen[i.password]||0)+1; });
+  allPw.forEach(i=>{ if(seen[i.password]>1) dupSet.add(i.id); });
+  const noPw = allItemsFlat().filter(i=> ('password' in i) && !i.password);
+
+  let score = 100;
+  score -= weak.length*10;
+  score -= dupSet.size*8;
+  score -= noPw.length*6;
+  score = Math.max(8, Math.min(100, score));
+  const color = score>=75?'var(--safe)': score>=45?'var(--warn)':'var(--danger)';
+  const circumference = 2*Math.PI*62;
+  const offset = circumference * (1-score/100);
+
+  frag.innerHTML = `
+    <div class="topbar"><div><h1 class="h1">مركز الأمان</h1><p class="sub">نظرة شاملة على مستوى أمان بياناتك</p></div></div>
+    <div class="score-ring-wrap">
+      <div class="score-ring">
+        <svg width="150" height="150">
+          <circle cx="75" cy="75" r="62" fill="none" stroke="var(--surface-2)" stroke-width="12"/>
+          <circle cx="75" cy="75" r="62" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round"
+            stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" style="transition:stroke-dashoffset .6s ease;"/>
+        </svg>
+        <div class="num"><b style="color:${color}">${score}%</b><span>الأمان</span></div>
+      </div>
+      <p class="sub" style="margin-top:10px; text-align:center;">${score>=75?'خزنتك في وضع جيد 👍':score>=45?'هناك عناصر تحتاج مراجعة':'ننصح بمراجعة الأمان الآن'}</p>
+    </div>
+  `;
+
+  const card = el('div','card');
+  function secRow(icon,bg,color,title,sub){
+    const r = el('div','sec-item');
+    r.innerHTML = `<div class="ic" style="background:${bg}; color:${color};">${icon}</div><div class="txt"><div class="t">${title}</div><div class="s">${sub}</div></div>`;
+    return r;
+  }
+  card.appendChild(secRow('⚠️','var(--danger-soft)','var(--danger)','كلمات مرور ضعيفة', `${weak.length} عنصر يحتاج كلمة مرور أقوى`));
+  card.appendChild(secRow('♻️','var(--warn-soft)','var(--warn)','كلمات مرور مكررة', `${dupSet.size} عنصر يشترك بنفس كلمة المرور`));
+  card.appendChild(secRow('🕓','var(--warn-soft)','var(--warn)','حسابات بلا كلمة مرور', `${noPw.length} عنصر بدون كلمة مرور مضافة`));
+  card.appendChild(secRow('🔒','var(--safe-soft)','var(--safe)','التشفير المحلي', `مفعّل لجميع البيانات الحساسة`));
+  frag.appendChild(card);
+
+  const genCard = el('div','card');
+  const genRow = el('div','sec-item');
+  genRow.style.cursor='pointer';
+  genRow.innerHTML = `<div class="ic" style="background:var(--accent-soft, var(--surface-2)); color:var(--accent);">🎲</div><div class="txt"><div class="t">مولّد كلمات المرور</div><div class="s">أنشئ كلمة مرور قوية وعشوائية بضغطة واحدة</div></div>`;
+  genRow.onclick = ()=>{ state.route='generator'; render(); };
+  genCard.appendChild(genRow);
+  frag.appendChild(genCard);
+
+  if(weak.length){
+    frag.appendChild(el('div','section-title','<h3>يحتاج مراجعة</h3>'));
+    const list = el('div');
+    weak.slice(0,6).forEach(it=> list.appendChild(buildItemRow(it, it.__type)));
+    frag.appendChild(list);
+  }
+  return frag;
+}
+
+/* ============================= SETTINGS ============================= */
+function renderSettings(){
+  const frag = el('div');
+  frag.innerHTML = `<div class="topbar"><div><h1 class="h1">الإعدادات</h1><p class="sub">تحكم في أمان التطبيق وتفضيلاتك</p></div></div>`;
+
+  function group(title, rows){
+    const g = el('div','set-group');
+    g.appendChild(el('div','g-title', title));
+    const card = el('div','card');
+    rows.forEach(r=>card.appendChild(r));
+    g.appendChild(card);
+    return g;
+  }
+  function row(icon,title,rightHtml,onClick){
+    const r = el('div','set-row');
+    r.innerHTML = `<div class="ic">${icon}</div><div class="t">${title}</div>`;
+    const right = el('div'); right.innerHTML = rightHtml;
+    r.appendChild(right);
+    if(onClick) r.onclick = onClick;
+    return r;
+  }
+  function switchRow(icon,title,on,onToggle){
+    const r = el('div','set-row');
+    r.innerHTML = `<div class="ic">${icon}</div><div class="t">${title}</div>`;
+    const sw = el('button','switch'+(on?' on':''));
+    sw.onclick = ()=>{ sw.classList.toggle('on'); onToggle(sw.classList.contains('on')); };
+    r.appendChild(sw);
+    return r;
+  }
+  function selectRow(icon,title,value,options,onChange){
+    const r = el('div','set-row');
+    r.innerHTML = `<div class="ic">${icon}</div><div class="t">${title}</div>`;
+    const sel = el('select');
+    sel.style.cssText = 'background:transparent; border:none; color:var(--text-dim); font:inherit; direction:rtl; max-width:130px;';
+    options.forEach(o=>{
+      const opt = el('option'); opt.value=o.v; opt.textContent=o.l;
+      if(String(o.v)===String(value)) opt.selected=true;
+      sel.appendChild(opt);
+    });
+    sel.onchange = ()=> onChange(sel.value);
+    r.appendChild(sel);
+    return r;
+  }
+
+  const securityRows = [];
+  if(!state.masterSet){
+    securityRows.push(row('🔑','إنشاء كلمة مرور للتطبيق', `<span class="chev">‹</span>`,
+      ()=>{ state.modal={kind:'appPassword', mode:'create'}; render(); }));
+  } else {
+    securityRows.push(row('🔒','قفل التطبيق الآن', `<span class="chev">‹</span>`,
+      ()=>{ lockVault(); render(); }));
+    securityRows.push(selectRow('⏱️','القفل التلقائي', state.autoLockMinutes, [
+      {v:0, l:'فورًا عند الخروج'},
+      {v:1, l:'بعد دقيقة'},
+      {v:5, l:'بعد 5 دقائق'},
+      {v:15, l:'بعد 15 دقيقة'},
+      {v:-1, l:'تعطيل'},
+    ], (v)=>{ state.autoLockMinutes = parseInt(v,10); saveToStorage(); showToast('تم تحديث إعداد القفل التلقائي','⏱️'); }));
+    securityRows.push(row('🔑','تغيير كلمة المرور', `<span class="chev">‹</span>`,
+      ()=>{ state.modal={kind:'appPassword', mode:'change'}; render(); }));
+    securityRows.push(row('🚫','إزالة كلمة مرور التطبيق', `<span class="chev">‹</span>`,
+      ()=>{ state.modal={kind:'appPassword', mode:'remove'}; render(); }));
+    securityRows.push(row('🔐','التشفير المحلي', `<span class="v" style="color:var(--safe);">مفعّل (AES-256)</span>`));
+  }
+  const bioRow = el('div','set-row');
+  bioRow.style.opacity='.55';
+  bioRow.innerHTML = `<div class="ic">👆</div><div class="t">البصمة / Face ID<div class="field-hint" style="margin-top:2px;">تُفعَّل تلقائيًا عند تحويل التطبيق لتطبيق جوّال حقيقي (Capacitor)</div></div><span class="v">قريبًا</span>`;
+  securityRows.push(bioRow);
+  frag.appendChild(group('الأمان', securityRows));
+
+  frag.appendChild(group('المظهر واللغة', [
+    switchRow('🌙','الوضع الليلي', state.theme==='dark', (v)=>{ state.theme=v?'dark':'light'; document.body.setAttribute('data-theme', state.theme); }),
+    row('🌐','اللغة', `<span class="v">العربية</span>`, ()=>showToast('الإنجليزية ستُضاف قريبًا','🌐')),
+  ]));
+
+  frag.appendChild(group('البيانات', [
+    row('☁️','النسخ الاحتياطي المشفر', `<span class="chev">‹</span>`, ()=>showToast('نسخة احتياطية مشفرة — قريبًا','🛠️')),
+    row('📥','استيراد البيانات', `<span class="chev">‹</span>`, ()=>showToast('قريبًا','🛠️')),
+    row('📤','تصدير البيانات', `<span class="chev">‹</span>`, ()=>showToast('قريبًا','🛠️')),
+  ]));
+
+  frag.appendChild(group('حول', [
+    row('ℹ️','حول التطبيق', `<span class="chev">‹</span>`, ()=>showToast('خزنة — الإصدار 1.0.0 (تجريبي)','🔐')),
+    row('📄','سياسة الخصوصية', `<span class="chev">‹</span>`, ()=>showToast('نموذج تجريبي — لا يتم رفع بياناتك لأي خادم','📄')),
+    row('📃','شروط الاستخدام', `<span class="chev">‹</span>`, ()=>showToast('نموذج تجريبي لأغراض العرض فقط','📃')),
+  ]));
+
+  const noteBox = el('div','note', state.masterSet
+    ? '🔒 بياناتك مشفّرة محليًا بمعيار AES-256، والمفتاح مشتق من كلمة مرورك ولا يُخزَّن في أي مكان. هذا نموذج أولي — عند تحويله لتطبيق جوّال حقيقي عبر Capacitor يُفضَّل ربط المفتاح أيضًا بخزنة النظام (Keychain/Keystore) لحماية إضافية.'
+    : '⚠️ البيانات تُحفظ محليًا في متصفح جهازك حاليًا كنص عادي غير مشفّر (لا تُرفع لأي خادم). فعّل "إنشاء كلمة مرور للتطبيق" أعلاه لتشفيرها فعليًا.');
+  frag.appendChild(noteBox);
+
+  return frag;
+}
+
+/* ============================= BOTTOM NAV ============================= */
+function renderBottomNav(){
+  const nav = el('div','bottom-nav');
+  const items = [
+    {r:'dashboard', ic:'🏠', l:'الرئيسية'},
+    {r:'items', ic:'🗂️', l:'العناصر'},
+    {r:'add', ic:'+', l:'', fab:true},
+    {r:'security', ic:'🛡️', l:'الأمان'},
+    {r:'settings', ic:'⚙️', l:'الإعدادات'},
+  ];
+  items.forEach(it=>{
+    const btn = el('button','nav-item' + (it.fab?' fab':'') + (state.route===it.r?' active':''));
+    btn.innerHTML = it.fab ? `<span class="ic">${it.ic}</span>` : `<span class="ic">${it.ic}</span><span>${it.l}</span>`;
+    btn.onclick = ()=>{
+      if(it.r==='add'){ openAddSheet(); return; }
+      if(it.r==='items'){ state.categoryType='account'; state.route='category'; render(); return; }
+      state.route = it.r; render();
+    };
+    nav.appendChild(btn);
+  });
+  return nav;
+}
+
+/* ============================= AUTO LOCK ============================= */
+['click','keydown','touchstart'].forEach(ev=>{
+  document.addEventListener(ev, ()=>{ state.lastActivity = Date.now(); });
+});
+
+// القفل التلقائي يعمل فقط إذا أنشأ المستخدم كلمة مرور للتطبيق من الإعدادات.
+setInterval(()=>{
+  if(state.masterSet && !state.locked && state.route!=='lock' && state.autoLockMinutes>=1){
+    const idleMs = Date.now()-state.lastActivity;
+    if(idleMs > state.autoLockMinutes*60*1000){
+      lockVault(); render();
+    }
+  }
+}, 5000);
+
+// قفل فوري عند مغادرة/تصغير التطبيق (تبديل التطبيقات، إغلاق الشاشة)
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){
+    state.hiddenAt = Date.now();
+  } else if(state.masterSet && !state.locked && state.hiddenAt){
+    const awayMs = Date.now()-state.hiddenAt;
+    const shouldLock = state.autoLockMinutes===0 || (state.autoLockMinutes>=1 && awayMs > state.autoLockMinutes*60*1000);
+    if(shouldLock){
+      lockVault(); render();
+    }
+    state.hiddenAt = null;
+  }
+});
+
+render();
+
+/* ============================= PWA: SERVICE WORKER ============================= */
+// يعمل فقط عند الاستضافة عبر HTTPS (أو localhost)، وهو أحد شروط تثبيت PWA على أندرويد/iOS
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{ /* تجاهل بيئات لا تدعمه (مثل فتح الملف مباشرة) */ });
+  });
+}
+</script>
+</body>
+</html>
