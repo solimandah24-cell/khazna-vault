@@ -1,1 +1,8 @@
-[ { "relation": ["delegate_permission/common.handle_all_urls"], "target": { "namespace": "android_app", "package_name": "REPLACE_WITH_YOUR_ANDROID_PACKAGE_NAME", "sha256_cert_fingerprints": [ "REPLACE_WITH_YOUR_APP_SIGNING_SHA256_FINGERPRINT" ] } } ]
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.solimandah24_cell.twa",
+        "sha256_cert_fingerprints": ["21:A1:B0:6C:77:B2:CE:CD:B0:15:26:59:19:75:2C:49:79:6F:2A:FC:B0:00:BC:58:6A:F7:A2:B4:C0:A1:FC:FA"]
+      }
+    }]
